@@ -1,0 +1,17 @@
+<!-- 子模板: 案件审核 (由 js/views.js 注入到 #content) -->
+<section id="pane-audit" class="pane hidden">
+    <div class="panel">
+        <div class="panel-head">
+            <h2>案件审核</h2>
+            <span class="panel-sub">按案件编号查询风险案例，人工确认关停 / 驳回</span>
+        </div>
+        <form id="auForm" class="tool-form">
+            <label class="field field-inline">
+                <span>案件编号 caseNo</span>
+                <input id="auCaseNo" type="text" placeholder="如：RC20260901xxxx" required>
+            </label>
+            <button type="submit" class="btn btn-primary">查询案例</button>
+        </form>
+        <div id="auDetail"></div>
+    </div>
+</section>

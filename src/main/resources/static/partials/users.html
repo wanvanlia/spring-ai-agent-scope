@@ -1,0 +1,32 @@
+<!-- 子模板: 用户管理 (由 js/views.js 注入到 #content) -->
+<section id="pane-users" class="pane hidden">
+    <div class="panel">
+        <div class="panel-head">
+            <h2>用户管理</h2>
+            <span class="panel-sub">t_user 查询 / 新增 / 修改 / 重置密码</span>
+            <button id="btnAddUser" class="btn btn-primary" style="margin-left:auto">+ 新增用户</button>
+        </div>
+
+        <form id="uqForm" class="tool-form">
+            <label class="field-inline"><span>用户名</span>
+                <input id="uq_username" type="text" placeholder="支持模糊匹配"></label>
+            <label class="field-inline"><span>角色</span>
+                <select id="uq_role">
+                    <option value="">全部</option>
+                    <option value="USER">普通用户</option>
+                    <option value="AUDITOR">审核员</option>
+                    <option value="ADMIN">管理员</option>
+                </select></label>
+            <label class="field-inline"><span>状态</span>
+                <select id="uq_status">
+                    <option value="">全部</option>
+                    <option value="1">启用</option>
+                    <option value="0">禁用</option>
+                </select></label>
+            <button type="submit" class="btn btn-primary">查询</button>
+            <button type="button" id="uqReset" class="btn btn-ghost-dark">重置</button>
+        </form>
+
+        <div id="uqResult"></div>
+    </div>
+</section>

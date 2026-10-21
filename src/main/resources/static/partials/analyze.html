@@ -1,0 +1,17 @@
+<!-- 子模板: 号码研判 (由 js/views.js 注入到 #content) -->
+<section id="pane-analyze" class="pane hidden">
+    <div class="panel">
+        <div class="panel-head">
+            <h2>号码研判</h2>
+            <span class="panel-sub">跳过意图识别，直接对号码执行 分析 → 处置 完整链路</span>
+        </div>
+        <form id="anForm" class="tool-form">
+            <label class="field field-inline">
+                <span>待核查手机号</span>
+                <input id="anPhone" type="text" placeholder="11 位手机号" maxlength="11" required>
+            </label>
+            <button id="anBtn" type="submit" class="btn btn-primary">开始研判</button>
+        </form>
+        <div id="anResult"></div>
+    </div>
+</section>

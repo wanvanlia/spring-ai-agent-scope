@@ -1,0 +1,23 @@
+<!-- 子模板: 数据查询 (由 js/views.js 注入到 #content) -->
+<section id="pane-data" class="pane hidden">
+    <div class="panel">
+        <div class="panel-head">
+            <h2>数据查询</h2>
+            <span class="panel-sub">号码库 / 风险案例 / 关停工单 分页检索</span>
+        </div>
+
+        <div class="sub-tabs">
+            <button class="sub-tab active" data-ds="phone">号码库 t_phone_number</button>
+            <button class="sub-tab" data-ds="case">风险案例 t_risk_case</button>
+            <button class="sub-tab" data-ds="order">关停工单 t_shutdown_order</button>
+        </div>
+
+        <form id="dqForm" class="tool-form">
+            <span id="dqFilters" class="filter-group"></span>
+            <button type="submit" class="btn btn-primary">查询</button>
+            <button type="button" id="dqReset" class="btn btn-ghost btn-ghost-dark">重置</button>
+        </form>
+
+        <div id="dqResult"></div>
+    </div>
+</section>

@@ -1,0 +1,44 @@
+<!-- 子模板: 知识库摄入 (由 js/views.js 注入到 #content) -->
+<section id="pane-ingest" class="pane hidden">
+    <div class="panel">
+        <div class="panel-head">
+            <h2>知识库摄入</h2>
+            <span class="panel-sub">向 Milvus 向量库写入反诈知识 / 案例，供 RAG 检索增强</span>
+        </div>
+
+        <h3 class="block-title">单条摄入</h3>
+        <form id="inForm" class="ingest-grid">
+            <label class="field span-2">
+                <span>内容</span>
+                <textarea id="inContent" rows="4" placeholder="输入知识 / 案例文本…" required></textarea>
+            </label>
+            <label class="field">
+                <span>来源</span>
+                <input id="inSource" type="text" placeholder="如：manual / 公安部通告">
+            </label>
+            <label class="field">
+                <span>标签 tag</span>
+                <input id="inTag" type="text" placeholder="如：冒充公检法">
+            </label>
+            <button type="submit" class="btn btn-primary btn-block">提交摄入</button>
+        </form>
+
+        <h3 class="block-title">批量摄入</h3>
+        <form id="inBatchForm" class="ingest-grid">
+            <label class="field span-2">
+                <span>内容（每行一条，自动拆分为多条文档）</span>
+                <textarea id="inBatchContent" rows="6" placeholder="第一条知识&#10;第二条知识&#10;第三条知识" required></textarea>
+            </label>
+            <label class="field">
+                <span>来源</span>
+                <input id="inBatchSource" type="text" placeholder="共享来源，如：batch">
+            </label>
+            <label class="field">
+                <span>标签 tag</span>
+                <input id="inBatchTag" type="text" placeholder="共享标签">
+            </label>
+            <button type="submit" class="btn btn-primary btn-block">批量提交</button>
+        </form>
+        <div id="inResult"></div>
+    </div>
+</section>

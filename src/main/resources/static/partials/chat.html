@@ -1,0 +1,26 @@
+<!-- 子模板: 对话研判 (由 js/views.js 注入到 #content) -->
+<section id="pane-chat" class="pane">
+    <div class="panel chat-panel">
+        <div class="panel-head">
+            <h2>对话研判</h2>
+            <span class="panel-sub">多轮对话：支持意图识别、号码提取与自动研判</span>
+        </div>
+        <div id="chatMsg" class="chat-body">
+            <div class="msg msg-sys">
+                你好，我是反诈研判助手。可以这样向我提问：<br>
+                · 帮我核查 13800001111 是否有诈骗风险<br>
+                · 举报骚扰电话 13800001111<br>
+                · 要求对 13800001111 做关停处置
+            </div>
+        </div>
+        <div class="chat-quick">
+            <button class="chip" data-q="帮我核查 13800001111 是否有诈骗风险">示例 · 核查号码</button>
+            <button class="chip" data-q="举报骚扰电话 13800001111">示例 · 举报</button>
+            <button class="chip" data-q="最近遇到冒充客服退款诈骗，怎么识别？">示例 · 咨询</button>
+        </div>
+        <form id="chatForm" class="chat-input">
+            <input id="chatInput" type="text" placeholder="输入消息，Enter 发送…" autocomplete="off">
+            <button type="submit" class="btn btn-primary">发送</button>
+        </form>
+    </div>
+</section>

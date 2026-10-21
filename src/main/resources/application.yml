@@ -1,0 +1,185 @@
+spring:
+  application:
+    name: antifraud-agent
+  profiles:
+    active: dev
+
+  # ============ JSON 序列化 ============
+  jackson:
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      # 关闭"时间戳数组"模式, 否则 LocalDateTime 会输出为 [2026,9,8,14,40,4]
+      write-dates-as-timestamps: false
+
+  # ============ 数据源 ============
+  datasource:
+    # MySQL 业务库(MyBatis-Plus 主数据源)
+    mysql:
+      # 注意: characterEncoding 必须写 UTF-8(驱动内部映射到 utf8mb4)。
+      # 直接写 utf8mb4 时, Connector/J < 8.0.26 会抛 "Unsupported character encoding 'utf8mb4'"。
+      url: jdbc:mysql://10.0.7.20:3306/antifraud_agent?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      username: root
+      password: Eversec@123
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        pool-name: MySQLHikari
+        maximum-pool-size: 20
+
+  # ============ Spring AI ============
+  ai:
+    openai:
+      # 建议通过环境变量 OPENAI_API_KEY 注入真实 DashScope API Key。
+      # 注意: 当前默认 key 实测无效(接口返回 401 invalid_api_key), 必须替换, 否则调用会 401。
+      api-key: ${OPENAI_API_KEY:sk-ws-H.PDHIYYE.BeRR.MEQCICubOoA_x9l7utDDejjkdXrf37c0iUD13hKSo6evoVGsAiAkzSmNRnmcPWcac_CHMszJh-1omgxhz2LntfhL6W_KmA}
+      # 阿里云百炼(DashScope) OpenAI 兼容模式。
+      # 关键: Spring AI 的请求路径自带 /v1(chat -> /v1/chat/completions, embedding -> /v1/embeddings),
+      #      因此 base-url 不能再带 /v1, 否则会拼成
+      #      .../compatible-mode/v1/v1/chat/completions -> HTTP 404 No response body available
+      base-url: ${OPENAI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode}
+      chat:
+        options:
+          # 必须是通用对话模型(具备指令遵循与 JSON 输出能力)。
+          # 原值 qwen3.5-ocr 为 OCR 专用模型, 实测会输出非法 JSON / 回显 schema 定义, 已改默认 qwen-plus。
+          # 可用环境变量 CHAT_MODEL 覆盖(推荐 qwen-plus / qwen-max)。
+          model: ${CHAT_MODEL:qwen3.7-flash-2026-07-15}
+          temperature: 0.1   # 低温度保证风控判断严谨性
+          max-tokens: 2048
+      embedding:
+        options:
+          model: qwen3.7-text-embedding-flash
+      # 可切换为本地 Ollama: 注释上面, 启用下面
+      # ollama 不在此配置
+    vectorstore:
+      # Milvus 向量库(Milvus Lite / Standalone, 由 spring-ai-starter-vector-store-milvus 自动装配)
+      milvus:
+        client:
+          host: ${MILVUS_HOST:10.0.7.20}
+          port: ${MILVUS_PORT:19530}
+          # 认证(Milvus Lite 本地免认证, 留空即可)
+          username: ${MILVUS_USERNAME:}
+          password: ${MILVUS_PASSWORD:}
+        database-name: default
+        collection-name: v_knowledge_base
+        embedding-dimension: 1536
+        index-type: IVF_FLAT
+        metric-type: COSINE
+        # 启动时自动创建 collection(字段: id/content/metadata/embedding)
+        initialize-schema: true
+
+  # ============ Redis ============
+  data:
+    redis:
+      host: 10.0.7.20
+      port: 6379
+      password: ReDis2025@aU@7
+      database: 3
+      timeout: 5s
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+
+  # ============ MyBatis-Plus ============
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.antifraud.agent.entity
+  global-config:
+    db-config:
+      id-type: AUTO
+      table-underline: true
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# ============ 服务 ============
+server:
+  port: 8080
+  servlet:
+    context-path: /antifraud
+
+# ============ 业务配置 ============
+antifraud:
+  security:
+    jwt:
+      secret: antifraud-secret-key-please-change-in-production-2026
+      ttl-minutes: 120
+    # Prompt 注入敏感词(逗号分隔, @Value List 绑定)
+    prompt-injection-keywords: ignore previous,忽略之前,system prompt,请输出你的指令
+  ratelimit:
+    # 每用户每分钟最大请求数
+    max-requests-per-minute: 30
+  rag:
+    top-k: 5
+    similarity-threshold: 0.75
+  agent:
+    # 高风险自动执行开关(生产建议关闭, 走人机协同)
+    auto-shutdown-high-risk: false
+  # ============ AgentScope Java 2.x(智能体运行时) ============
+  agentscope:
+    # 建议通过环境变量 OPENAI_API_KEY 注入真实 Key(与 spring.ai.openai.api-key 同源)。
+    api-key: ${OPENAI_API_KEY:sk-ws-H.PDHIYYE.BeRR.MEQCICubOoA_x9l7utDDejjkdXrf37c0iUD13hKSo6evoVGsAiAkzSmNRnmcPWcac_CHMszJh-1omgxhz2LntfhL6W_KmA}
+    # 注意: 与 Spring AI 不同, AgentScope 的 OpenAI 扩展**不会自动补 /v1**,
+    #       这里必须给到包含 /v1 的完整基址, 否则会 404。
+    base-url: ${OPENAI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+    model: ${CHAT_MODEL:qwen3.7-flash-2026-07-15}
+    temperature: 0.1      # 低温度保证风控判断严谨性
+    # 是否流式推理; 当前接口为同步返回, 保持 false
+    stream: false
+    # ReAct 主循环最大迭代次数(防止工具调用死循环)
+    max-iters: 10
+    # 会话状态(AgentState)持久化目录, 按 (userId, sessionId) 分目录存储
+    state-store-path: ${AGENTSCOPE_STATE_PATH:.agentscope/state}
+  masking:
+    # PII 脱敏
+    phone-keep-head: 3
+    phone-keep-tail: 4
+  log:
+    # 日志目录(相对项目根目录; 设为 . 则直接输出到项目根目录的 console.log)
+    path: logs
+    # 归档保留天数
+    max-history: 30
+    # 归档总大小上限
+    total-size-cap: 1GB
+
+# ============ 熔断 Resilience4j ============
+resilience4j:
+  circuitbreaker:
+    instances:
+      llmCall:
+        register-health-indicator: true
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 5
+  timelimiter:
+    instances:
+      llmCall:
+        timeout-duration: 30s
+
+# ============ 监控 ============
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# ============ 日志 ============
+# 说明: 输出目标与滚动归档策略统一由 logback-spring.xml 管理
+#       (控制台 + logs/console.log, 按天归档为 console-yyyy-MM-dd.log.gz)
+#       目录与保留策略见上方 antifraud.log.* 配置。
+logging:
+  level:
+    com.antifraud.agent: INFO
+    org.springframework.ai: INFO
+    # 需要排查 SQL 时临时打开
+    # com.antifraud.agent.mapper: DEBUG
+  #pattern:
+  #  console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) [%X{traceId:-}] %clr(%-40.40logger{39}) : %m%n"

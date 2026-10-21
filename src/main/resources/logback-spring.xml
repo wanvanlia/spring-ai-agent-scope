@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  日志配置:
+  1. 控制台: 保留原有格式(带颜色 + traceId)
+  2. 文件  : logs/console.log, 每天 0 点滚动归档为 logs/console-yyyy-MM-dd.log.gz(自动压缩打包)
+  可通过 application.yml 的 antifraud.log.* 调整目录/保留天数/容量上限。
+-->
+<configuration>
+
+    <!--
+      必须引入 Spring Boot 默认定义: 它注册了 %clr(彩色输出)、%wEx 等转换词。
+      不引入的话, 自定义 logback-spring.xml 中使用 %clr 会报
+      "There is no conversion class registered for composite conversion word [clr]"。
+    -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- 从 Spring 环境读取配置, 便于在 application.yml 中调整 -->
+    <springProperty scope="context" name="LOG_PATH" source="antifraud.log.path" defaultValue="logs"/>
+    <springProperty scope="context" name="LOG_MAX_HISTORY" source="antifraud.log.max-history" defaultValue="30"/>
+    <springProperty scope="context" name="LOG_TOTAL_SIZE_CAP" source="antifraud.log.total-size-cap" defaultValue="1GB"/>
+
+    <property name="LOG_FILE_NAME" value="console"/>
+    <!-- 控制台格式(带颜色); %X{traceId:-} 来自 TraceIdFilter 写入的 MDC -->
+    <property name="CONSOLE_PATTERN"
+              value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) [%X{traceId:-}] %clr(%-40.40logger{39}) : %m%n"/>
+    <!-- 文件格式(不带颜色, 追加线程名便于排错) -->
+    <property name="FILE_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%X{traceId:-}] [%thread] %-40.40logger{39} : %m%n"/>
+
+    <!-- ==================== 控制台 ==================== -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ==================== 文件: 按日期滚动归档 ==================== -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 当前正在写入的文件 -->
+        <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file>
+        <append>true</append>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 归档文件名: 按天切分; 以 .gz 结尾会自动压缩打包 -->
+            <fileNamePattern>${LOG_PATH}/${LOG_FILE_NAME}-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <!-- 归档保留天数 -->
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+            <!-- 归档总大小上限, 超出后从最旧的开始删除 -->
+            <totalSizeCap>${LOG_TOTAL_SIZE_CAP}</totalSizeCap>
+            <!-- 启动时不清理历史归档 -->
+            <cleanHistoryOnStart>false</cleanHistoryOnStart>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>${FILE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ==================== 级别 ==================== -->
+    <logger name="com.antifraud.agent" level="INFO"/>
+    <logger name="org.springframework.ai" level="INFO"/>
+    <!-- SQL 调试时可临时打开(会打印 MyBatis-Plus 的 SQL) -->
+    <!-- <logger name="com.antifraud.agent.mapper" level="DEBUG"/> -->
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+</configuration>

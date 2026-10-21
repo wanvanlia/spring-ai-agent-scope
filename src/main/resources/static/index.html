@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>反诈智能 Agent 工作台</title>
+    <link rel="stylesheet" href="/antifraud/css/style.css">
+</head>
+<body>
+
+<!-- ========== 登录视图 ========== -->
+<div id="loginView" class="login-wrap">
+    <div class="login-card">
+        <div class="brand">
+            <div class="brand-logo">盾</div>
+            <div>
+                <h1>反诈智能 Agent 工作台</h1>
+                <p>电信网络诈骗识别 · 研判 · 处置一体化平台</p>
+            </div>
+        </div>
+
+        <form id="loginForm" autocomplete="off">
+            <label class="field">
+                <span>账号</span>
+                <input id="username" type="text" placeholder="请输入用户名" required>
+            </label>
+            <label class="field">
+                <span>密码</span>
+                <input id="password" type="password" placeholder="请输入密码" required>
+            </label>
+            <button id="btnLogin" type="submit" class="btn btn-primary btn-block">登 录</button>
+        </form>
+
+        <div class="login-hint">
+            <strong>账号提示</strong>（t_user 表预置，角色决定可用功能）<br>
+            · <code>admin</code> / <code>Admin@123</code> — 管理员(ADMIN)：对话 / 号码研判 / 案件审核 / 数据查询 / 用户管理 / 知识库<br>
+            · <code>auditor01</code> / <code>Auditor@123</code> — 审核员(AUDITOR)：对话 / 号码研判 / 案件审核 / 数据查询<br>
+            · 普通用户(USER)：仅对话研判
+        </div>
+    </div>
+</div>
+
+<!-- ========== 工作台外壳 ========== -->
+<div id="appView" class="app hidden">
+
+    <header class="topbar">
+        <div class="topbar-title">
+            <span class="logo-mini">盾</span>
+            <span>反诈智能 Agent 工作台</span>
+        </div>
+        <div class="topbar-user">
+            <span id="userName" class="user-name"></span>
+            <span id="userRole" class="role-tag"></span>
+            <button id="btnChangePwd" class="btn btn-ghost">修改密码</button>
+            <button id="btnLogout" class="btn btn-ghost">退出</button>
+        </div>
+    </header>
+
+    <div class="layout">
+        <aside class="sidebar">
+            <nav class="nav">
+                <button class="nav-item active" data-tab="chat">对话研判</button>
+                <button class="nav-item" data-tab="analyze" data-role="AUDITOR,ADMIN">号码研判</button>
+                <button class="nav-item" data-tab="audit" data-role="AUDITOR,ADMIN">案件审核</button>
+                <button class="nav-item" data-tab="data" data-role="AUDITOR,ADMIN">数据查询</button>
+                <button class="nav-item" data-tab="users" data-role="ADMIN">用户管理</button>
+                <button class="nav-item" data-tab="ingest" data-role="ADMIN">知识库</button>
+            </nav>
+            <div class="sidebar-foot">统一响应 <code>code=0</code> 为成功<br>鉴权: <code>Authorization: Bearer &lt;token&gt;</code></div>
+        </aside>
+
+        <!-- 各功能页由 js/views.js 从 partials/*.html 动态注入 -->
+        <main class="content" id="content"></main>
+    </div>
+</div>
+
+<!-- 通用弹窗 -->
+<div id="modal" class="modal hidden">
+    <div class="modal-mask" id="modalMask"></div>
+    <div class="modal-box">
+        <div class="modal-head">
+            <span id="modalTitle"></span>
+            <button id="modalClose" class="modal-close" title="关闭">&times;</button>
+        </div>
+        <div id="modalBody" class="modal-body"></div>
+        <div id="modalFoot" class="modal-foot"></div>
+    </div>
+</div>
+
+<!-- 轻提示 -->
+<div id="toastBox" class="toast-box"></div>
+
+<!-- 加载浮层 -->
+<div id="loading" class="loading hidden">
+    <div class="spinner"></div>
+    <div id="loadingText">处理中…</div>
+</div>
+
+<script src="/antifraud/js/api.js"></script>
+<script src="/antifraud/js/views.js"></script>
+<script src="/antifraud/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+# 一键启动 MySQL(业务库) + Milvus(向量库) + Redis(会话记忆)
+# 用法: docker compose up -d
+# 之后执行: src/main/resources/sql/mysql_schema.sql (MySQL 建表)
+#   Milvus 的 collection(v_knowledge_base) 由 Spring AI 启动时 initialize-schema=true 自动创建
+
+# 说明: Milvus Lite 是 Python 进程内嵌入式运行时(pip install milvus-lite), 无法在 JVM 内嵌入。
+# Java/Spring AI 通过 gRPC 连接 Milvus 服务, 因此本地开发使用单容器 Standalone(embedded etcd+local storage),
+# 即 Java 栈下最轻量的等价方案。生产可平滑替换为 Milvus Cluster。
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: antifraud-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: antifraud_agent
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_0900_ai_ci
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./src/main/resources/sql/mysql_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  milvus:
+    # Milvus Standalone(embedded etcd + 本地存储, 单容器, 无需额外 etcd/minio 依赖)
+    image: milvusdb/milvus:latest
+    container_name: antifraud-milvus
+    command: ["milvus", "run", "standalone"]
+    environment:
+      ETCD_USE_EMBED: "true"
+      ETCD_DATA_DIR: /var/lib/milvus/etcd
+      COMMON_STORAGETYPE: "local"
+    ports:
+      - "19530:19530"   # gRPC, Spring AI MilvusVectorStore 连此端口
+      - "9091:9091"     # 健康检查/metrics
+    volumes:
+      - milvus_data:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: antifraud-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+
+volumes:
+  mysql_data:
+  milvus_data:
+  redis_data:
